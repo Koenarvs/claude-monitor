@@ -39,4 +39,5 @@ export interface SessionView {
   cost: number;
   turns: number;
   subagents: SubagentInfo[];
+  compactionCount: number;
 }

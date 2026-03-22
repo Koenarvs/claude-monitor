@@ -48,6 +48,7 @@ export interface SessionRuntime {
   activeGenerator: AsyncGenerator<any, any, any> | null;
   pendingApproval: PendingApproval | null;
   subagents: SubagentInfo[];
+  compactionCount: number;
 }
 
 export interface SessionView {
@@ -63,6 +64,7 @@ export interface SessionView {
   cost: number;
   turns: number;
   subagents: SubagentInfo[];
+  compactionCount: number;
 }
 
 export function toSessionView(s: SessionRuntime): SessionView {
@@ -79,5 +81,6 @@ export function toSessionView(s: SessionRuntime): SessionView {
     cost: s.cost,
     turns: s.turns,
     subagents: s.subagents,
+    compactionCount: s.compactionCount,
   };
 }

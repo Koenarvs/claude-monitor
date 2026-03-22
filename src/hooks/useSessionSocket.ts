@@ -52,6 +52,10 @@ export function useSessionSocket() {
         case 'session:subagent':
           dispatch({ type: 'SESSION_SUBAGENT', id: data.id, subagent: data.subagent });
           break;
+        case 'session:compaction':
+          dispatch({ type: 'SESSION_COMPACTION', id: data.id, compactionCount: data.compactionCount });
+          notifySessionNeedsAttention(data.id, `Context compacted (#${data.compactionCount})`);
+          break;
         case 'session:removed':
           dispatch({ type: 'SESSION_REMOVED', id: data.id });
           break;

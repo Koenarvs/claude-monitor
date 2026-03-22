@@ -45,6 +45,12 @@ export function SessionHeader({ session, onRename, onClose, onRetry }: Props) {
         ${session.cost.toFixed(4)} | {session.turns} turns
       </span>
 
+      {session.compactionCount > 0 && (
+        <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-900 text-orange-300 font-bold" title="Context has been compacted — some earlier context may be summarized">
+          {session.compactionCount}x compacted
+        </span>
+      )}
+
       {session.status === 'error' && (
         <button onClick={onRetry} className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-500 rounded text-white">
           Retry

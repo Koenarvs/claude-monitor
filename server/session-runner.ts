@@ -94,6 +94,31 @@ export async function runSession(
         });
       }
 
+      // Detect compaction events
+      if (m.type === 'system' && m.subtype === 'compact_boundary') {
+        const preTokens = m.compact_metadata?.pre_tokens ?? 0;
+        session.compactionCount = (session.compactionCount ?? 0) + 1;
+
+        const compactMsg: Message = {
+          id: uuid(),
+          type: 'system',
+          content: `Context compacted (${Math.round(preTokens / 1000)}k tokens → summary). Compaction #${session.compactionCount}.`,
+          timestamp: Date.now(),
+        };
+        session.messages.push(compactMsg);
+        broadcast(session.id, 'session:message', { id: session.id, message: compactMsg });
+        broadcast(session.id, 'session:compaction', {
+          id: session.id,
+          compactionCount: session.compactionCount,
+          preTokens,
+        });
+
+        // Trigger memory flush — write current session state to vault
+        writeSessionLog(session).catch((err) =>
+          console.error(`Compaction memory flush failed for ${session.id}:`, err)
+        );
+      }
+
       if (m.type === 'assistant' && m.message?.content) {
         for (const block of m.message.content) {
           if (block.type === 'text' && block.text) {

@@ -59,6 +59,7 @@ export class SessionManager {
       activeGenerator: null,
       pendingApproval: null,
       subagents: [],
+      compactionCount: 0,
     };
 
     this.sessions.set(id, session);

@@ -15,7 +15,8 @@ type Action =
   | { type: 'SESSION_REMOVED'; id: string }
   | { type: 'SET_ACTIVE'; id: string }
   | { type: 'RENAME_SESSION'; id: string; name: string }
-  | { type: 'SESSION_SUBAGENT'; id: string; subagent: SubagentInfo };
+  | { type: 'SESSION_SUBAGENT'; id: string; subagent: SubagentInfo }
+  | { type: 'SESSION_COMPACTION'; id: string; compactionCount: number };
 
 function reducer(state: AppState, action: Action): AppState {
   const sessions = new Map(state.sessions);
@@ -84,6 +85,12 @@ function reducer(state: AppState, action: Action): AppState {
         ? (s.subagents || []).map((sa, i) => i === existing ? action.subagent : sa)
         : [...(s.subagents || []), action.subagent];
       sessions.set(action.id, { ...s, subagents: updatedSubagents });
+      return { ...state, sessions };
+    }
+    case 'SESSION_COMPACTION': {
+      const s = sessions.get(action.id);
+      if (!s) return state;
+      sessions.set(action.id, { ...s, compactionCount: action.compactionCount });
       return { ...state, sessions };
     }
     default:
