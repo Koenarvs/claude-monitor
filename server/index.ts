@@ -5,6 +5,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { SessionManager } from './session-manager.js';
 import { scanSkillsAndAgents } from './skills-scanner.js';
+import { readClaudeMd, writeClaudeMd } from './claude-md.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '3002', 10);
@@ -66,6 +67,24 @@ app.post('/api/sessions/:id/retry', async (req, res) => {
 app.get('/api/skills', async (_req, res) => {
   const skills = await scanSkillsAndAgents();
   res.json(skills);
+});
+
+app.get('/api/claude-md', async (req, res) => {
+  const cwd = req.query.cwd as string;
+  if (!cwd) { res.status(400).json({ error: 'cwd query param required' }); return; }
+  const info = await readClaudeMd(cwd);
+  res.json(info);
+});
+
+app.put('/api/claude-md', async (req, res) => {
+  const { cwd, content } = req.body;
+  if (!cwd || content === undefined) { res.status(400).json({ error: 'cwd and content required' }); return; }
+  try {
+    await writeClaudeMd(cwd, content);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  }
 });
 
 // Serve built frontend in production
