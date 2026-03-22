@@ -11,9 +11,10 @@ interface SkillInfo {
 interface Props {
   open: boolean;
   onClose: () => void;
+  onRefine: (skill: { name: string; path: string; type: 'skill' | 'agent' }) => void;
 }
 
-export function SkillsBrowser({ open, onClose }: Props) {
+export function SkillsBrowser({ open, onClose, onRefine }: Props) {
   const [skills, setSkills] = useState<SkillInfo[]>([]);
   const [filter, setFilter] = useState<'all' | 'skill' | 'agent'>('all');
   const [loading, setLoading] = useState(false);
@@ -73,6 +74,15 @@ export function SkillsBrowser({ open, onClose }: Props) {
             {s.description && (
               <p className="text-xs text-gray-500 mt-1 line-clamp-2">{s.description}</p>
             )}
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={() => onRefine({ name: s.name, path: s.path, type: s.type })}
+                className="text-[10px] px-2 py-1 bg-amber-800 hover:bg-amber-700 rounded text-amber-200 transition-colors"
+                title={`Run /skill-creator to optimize ${s.name}'s description and evaluate performance`}
+              >
+                Refine
+              </button>
+            </div>
           </div>
         ))}
         {!loading && filtered.length === 0 && (

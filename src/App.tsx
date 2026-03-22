@@ -62,6 +62,25 @@ function AppContent() {
     });
   };
 
+  const handleRefineSkill = async (skill: { name: string; path: string; type: 'skill' | 'agent' }) => {
+    const parentDir = skill.path.replace(/[\\/][^\\/]+$/, '').replace(/[\\/][^\\/]+$/, '');
+    const prompt = `/skill-creator Optimize the "${skill.name}" ${skill.type}. The ${skill.type} is located at ${skill.path}. Run the eval loop to test trigger accuracy, then refine the description for better triggering. Show results after each iteration.`;
+    try {
+      await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cwd: parentDir,
+          prompt,
+          permissionMode: 'autonomous',
+          includeContext: false,
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to spawn refine session:', err);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100">
       <IconSidebar onNewSession={() => setSpawnOpen(true)} />
@@ -81,7 +100,7 @@ function AppContent() {
             onRetry={handleRetry}
             onRename={handleRename}
           />
-          <SkillsBrowser open={skillsOpen} onClose={() => setSkillsOpen(false)} />
+          <SkillsBrowser open={skillsOpen} onClose={() => setSkillsOpen(false)} onRefine={handleRefineSkill} />
           <ClaudeMdPanel open={claudeMdOpen} onClose={() => setClaudeMdOpen(false)} cwd={activeSession?.cwd ?? null} />
           <ExtensionsPanel open={extensionsOpen} onClose={() => setExtensionsOpen(false)} />
         </div>
