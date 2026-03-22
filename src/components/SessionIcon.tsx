@@ -9,7 +9,7 @@ const STATUS_COLORS: Record<SessionStatus, string> = {
   error: 'border-red-500',
 };
 
-const PULSE_STATUSES: SessionStatus[] = ['needs_input', 'waiting_approval'];
+const PULSE_STATUSES: SessionStatus[] = ['needs_input'];
 
 function getInitials(name: string): string {
   const words = name.split(/[-_:\s]+/).filter(Boolean);

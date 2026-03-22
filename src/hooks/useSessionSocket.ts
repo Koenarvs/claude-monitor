@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useSessionDispatch } from '../context/SessionContext';
+import { notifySessionNeedsAttention } from '../utils/notifications';
 
 export function useSessionSocket() {
   const dispatch = useSessionDispatch();
@@ -35,6 +36,9 @@ export function useSessionSocket() {
             cost: data.cost,
             lastActivityAt: data.lastActivityAt,
           });
+          if (data.status === 'needs_input' || data.status === 'waiting_approval') {
+            notifySessionNeedsAttention(data.id, data.status === 'needs_input' ? 'Ready for input' : 'Approval needed');
+          }
           break;
         case 'session:message':
           dispatch({ type: 'SESSION_MESSAGE', id: data.id, message: data.message });

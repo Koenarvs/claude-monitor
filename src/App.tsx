@@ -4,7 +4,7 @@ import { useSessionSocket } from './hooks/useSessionSocket';
 import { IconSidebar } from './components/IconSidebar';
 import { MainPanel } from './components/MainPanel';
 import { SpawnDialog } from './components/SpawnDialog';
-import { requestNotificationPermission, updateTabTitle } from './utils/notifications';
+import { requestNotificationPermission, notifySessionNeedsAttention, updateTabTitle } from './utils/notifications';
 import type { PermissionMode } from './types';
 
 function AppContent() {
