@@ -1,22 +1,24 @@
 import { useState, type KeyboardEvent } from 'react';
 import type { PermissionMode } from '../types';
+import { ContextPreview } from './ContextPreview';
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSpawn: (cwd: string, prompt: string, permissionMode: PermissionMode) => void;
+  onSpawn: (cwd: string, prompt: string, permissionMode: PermissionMode, includeContext: boolean) => void;
 }
 
 export function SpawnDialog({ open, onClose, onSpawn }: Props) {
   const [cwd, setCwd] = useState('C:/Users/Koena');
   const [prompt, setPrompt] = useState('');
   const [mode, setMode] = useState<PermissionMode>('autonomous');
+  const [includeContext, setIncludeContext] = useState(true);
 
   if (!open) return null;
 
   const handleSpawn = () => {
     if (!cwd.trim() || !prompt.trim()) return;
-    onSpawn(cwd.trim(), prompt.trim(), mode);
+    onSpawn(cwd.trim(), prompt.trim(), mode, includeContext);
     setPrompt('');
     onClose();
   };
@@ -79,6 +81,19 @@ export function SpawnDialog({ open, onClose, onSpawn }: Props) {
               ? 'All tool calls execute without approval'
               : 'Tool calls require your approval'}
           </p>
+        </div>
+
+        <div>
+          <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={includeContext}
+              onChange={(e) => setIncludeContext(e.target.checked)}
+              className="rounded border-gray-600"
+            />
+            Include context from other sessions
+          </label>
+          <ContextPreview enabled={includeContext} />
         </div>
 
         <div className="flex justify-end gap-2 pt-2">

@@ -173,6 +173,28 @@ export class SessionManager {
     });
   }
 
+  getRecentActivity(): string {
+    const active = [...this.sessions.values()]
+      .filter(s => s.status !== 'done')
+      .map(s => {
+        const filesChanged = s.messages
+          .filter(m => m.type === 'tool_call' && m.toolName && ['Edit', 'Write'].includes(m.toolName))
+          .map(m => {
+            const match = m.toolArgs?.match(/"file_path"\s*:\s*"([^"]+)"/);
+            return match?.[1];
+          })
+          .filter(Boolean);
+
+        const recentFiles = [...new Set(filesChanged)].slice(-5);
+        const fileStr = recentFiles.length > 0 ? ` (recently touched: ${recentFiles.join(', ')})` : '';
+
+        return `- [${s.status}] "${s.name}" in ${s.cwd}${fileStr}`;
+      });
+
+    if (active.length === 0) return '';
+    return `Other active sessions:\n${active.join('\n')}`;
+  }
+
   async closeSession(id: string): Promise<void> {
     await this.kill(id);
   }

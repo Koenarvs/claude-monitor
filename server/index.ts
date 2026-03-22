@@ -32,12 +32,21 @@ app.get('/api/sessions/:id', (req, res) => {
 
 app.post('/api/sessions', (req, res) => {
   try {
-    const { cwd, prompt, permissionMode, name } = req.body;
+    const { cwd, prompt, permissionMode, name, includeContext } = req.body;
     if (!cwd || !prompt) {
       res.status(400).json({ error: 'cwd and prompt are required' });
       return;
     }
-    const session = manager.spawn(cwd, prompt, permissionMode || 'autonomous', name);
+
+    let fullPrompt = prompt;
+    if (includeContext) {
+      const context = manager.getRecentActivity();
+      if (context) {
+        fullPrompt = `<cross-session-context>\n${context}\n</cross-session-context>\n\n${prompt}`;
+      }
+    }
+
+    const session = manager.spawn(cwd, fullPrompt, permissionMode || 'autonomous', name);
     res.status(201).json(session);
   } catch (err) {
     res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
@@ -67,6 +76,10 @@ app.post('/api/sessions/:id/retry', async (req, res) => {
 app.get('/api/skills', async (_req, res) => {
   const skills = await scanSkillsAndAgents();
   res.json(skills);
+});
+
+app.get('/api/context', (_req, res) => {
+  res.json({ context: manager.getRecentActivity() });
 });
 
 app.get('/api/claude-md', async (req, res) => {
