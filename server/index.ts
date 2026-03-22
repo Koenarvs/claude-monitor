@@ -4,6 +4,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { SessionManager } from './session-manager.js';
+import { scanSkillsAndAgents } from './skills-scanner.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '3002', 10);
@@ -60,6 +61,11 @@ app.delete('/api/sessions/:id', async (req, res) => {
 app.post('/api/sessions/:id/retry', async (req, res) => {
   await manager.retrySession(req.params.id);
   res.json({ ok: true });
+});
+
+app.get('/api/skills', async (_req, res) => {
+  const skills = await scanSkillsAndAgents();
+  res.json(skills);
 });
 
 // Serve built frontend in production
