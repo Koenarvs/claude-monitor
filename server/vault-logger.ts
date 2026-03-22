@@ -1,6 +1,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import type { SessionRuntime } from './types.js';
+import { summarizeSession } from './session-summarizer.js';
 
 const VAULT_PATH = 'D:/greyhawk-grand-campaign/_claude-memory/sessions';
 
@@ -39,30 +40,34 @@ export async function writeSessionLog(session: SessionRuntime): Promise<string> 
     '---',
   ].join('\n');
 
-  const sections: string[] = [frontmatter, '', `## ${session.name}`, ''];
-
-  if (filesChanged.length > 0) {
-    sections.push('## Files Changed', ...filesChanged.map(f => `- ${f}`), '');
+  // Try LLM-powered summary first, fall back to deterministic
+  let body = '';
+  try {
+    body = await summarizeSession(session);
+  } catch {
+    // Summarizer failed, use fallback
   }
 
-  if (commandsRun.length > 0) {
-    sections.push('## Commands Run', ...commandsRun.map(c => `- \`${c}\``), '');
-  }
+  if (!body) {
+    // Deterministic fallback (existing logic)
+    const bodyParts: string[] = [`## ${session.name}`, ''];
 
-  // Open items for incomplete sessions
-  if (session.status === 'error') {
-    const lastAssistant = [...session.messages]
-      .reverse()
-      .find(m => m.type === 'assistant');
-    if (lastAssistant) {
-      sections.push(
-        '## Open Items',
-        `Session ended with error. Last assistant message:`,
-        `> ${lastAssistant.content.slice(0, 500)}`,
-        ''
-      );
+    if (filesChanged.length > 0) {
+      bodyParts.push('## Files Changed', ...filesChanged.map(f => `- ${f}`), '');
     }
+    if (commandsRun.length > 0) {
+      bodyParts.push('## Commands Run', ...commandsRun.map(c => `- \`${c}\``), '');
+    }
+    if (session.status === 'error') {
+      const lastAssistant = [...session.messages].reverse().find(m => m.type === 'assistant');
+      if (lastAssistant) {
+        bodyParts.push('## Open Items', `Session ended with error. Last assistant message:`, `> ${lastAssistant.content.slice(0, 500)}`, '');
+      }
+    }
+    body = bodyParts.join('\n');
   }
+
+  const sections: string[] = [frontmatter, '', body];
 
   await writeFile(filepath, sections.join('\n'), 'utf-8');
   return filepath;
