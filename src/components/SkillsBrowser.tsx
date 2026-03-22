@@ -5,6 +5,7 @@ interface SkillInfo {
   description: string;
   path: string;
   type: 'skill' | 'agent';
+  scope: 'global' | 'project';
 }
 
 interface Props {
@@ -64,7 +65,10 @@ export function SkillsBrowser({ open, onClose }: Props) {
               }`}>
                 {s.type === 'skill' ? 'SKL' : 'AGT'}
               </span>
-              <span className="text-sm font-medium text-gray-200 truncate">{s.name}</span>
+              <span className="text-sm font-medium text-gray-200 truncate flex-1">{s.name}</span>
+              {s.scope === 'project' && (
+                <span className="text-[9px] px-1 py-0.5 rounded bg-blue-900 text-blue-300 font-bold flex-shrink-0">PRJ</span>
+              )}
             </div>
             {s.description && (
               <p className="text-xs text-gray-500 mt-1 line-clamp-2">{s.description}</p>

@@ -76,7 +76,8 @@ app.post('/api/sessions/:id/retry', async (req, res) => {
 });
 
 app.get('/api/skills', async (_req, res) => {
-  const skills = await scanSkillsAndAgents();
+  const projectDirs = manager.list().map(s => s.cwd);
+  const skills = await scanSkillsAndAgents(projectDirs);
   res.json(skills);
 });
 
@@ -119,7 +120,8 @@ app.put('/api/config', async (req, res) => {
 
 // Extensions (MCP servers, plugins, hooks)
 app.get('/api/extensions', async (_req, res) => {
-  const overview = await scanConfig();
+  const projectDirs = manager.list().map(s => s.cwd);
+  const overview = await scanConfig(projectDirs);
   res.json(overview);
 });
 

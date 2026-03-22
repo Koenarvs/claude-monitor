@@ -95,7 +95,7 @@ async function scanPlugins(): Promise<PluginInfo[]> {
   return results.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-async function scanHooks(): Promise<HookInfo[]> {
+async function scanHooks(projectDirs?: string[]): Promise<HookInfo[]> {
   const results: HookInfo[] = [];
 
   // Check settings.json and settings.local.json for hooks
@@ -122,11 +122,37 @@ async function scanHooks(): Promise<HookInfo[]> {
     }
   }
 
-  // Scan for hookify rule files in common locations
-  const hookifyLocations = [
-    join(CLAUDE_DIR),
+  // Also check project-level settings for hooks
+  for (const dir of projectDirs ?? []) {
+    const projectPaths = [
+      join(dir, '.claude', 'settings.json'),
+      join(dir, '.claude', 'settings.local.json'),
+    ];
+    for (const path of projectPaths) {
+      const data = await readJsonFile(path);
+      if (data.hooks) {
+        for (const [event, hookList] of Object.entries(data.hooks as Record<string, any[]>)) {
+          if (Array.isArray(hookList)) {
+            for (const hook of hookList) {
+              results.push({
+                name: hook.matcher || hook.command || 'unnamed',
+                event,
+                source: 'settings',
+                enabled: true,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Scan for hookify rule files in global + project locations
+  const hookifyLocations = new Set([
+    CLAUDE_DIR,
     join(process.cwd(), '.claude'),
-  ];
+    ...(projectDirs ?? []).map(d => join(d, '.claude')),
+  ]);
 
   for (const dir of hookifyLocations) {
     try {
@@ -165,11 +191,11 @@ async function scanHooks(): Promise<HookInfo[]> {
   return results;
 }
 
-export async function scanConfig(): Promise<ConfigOverview> {
+export async function scanConfig(projectDirs?: string[]): Promise<ConfigOverview> {
   const [mcpServers, plugins, hooks] = await Promise.all([
     scanMcpServers(),
     scanPlugins(),
-    scanHooks(),
+    scanHooks(projectDirs),
   ]);
   return { mcpServers, plugins, hooks };
 }
