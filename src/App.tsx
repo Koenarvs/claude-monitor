@@ -4,11 +4,14 @@ import { useSessionSocket } from './hooks/useSessionSocket';
 import { IconSidebar } from './components/IconSidebar';
 import { MainPanel } from './components/MainPanel';
 import { SpawnDialog } from './components/SpawnDialog';
+import { ToolbarButton } from './components/ToolbarButton';
+import { SkillsBrowser } from './components/SkillsBrowser';
 import { requestNotificationPermission, notifySessionNeedsAttention, updateTabTitle } from './utils/notifications';
 import type { PermissionMode } from './types';
 
 function AppContent() {
   const [spawnOpen, setSpawnOpen] = useState(false);
+  const [skillsOpen, setSkillsOpen] = useState(false);
   const { sendInput, approve, deny } = useSessionSocket();
   const { sessions } = useSessionState();
 
@@ -57,15 +60,23 @@ function AppContent() {
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100">
       <IconSidebar onNewSession={() => setSpawnOpen(true)} />
-      <MainPanel
-        onNewSession={() => setSpawnOpen(true)}
-        sendInput={sendInput}
-        approve={approve}
-        deny={deny}
-        onClose={handleClose}
-        onRetry={handleRetry}
-        onRename={handleRename}
-      />
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex items-center gap-1 px-2 py-1 border-b border-gray-800 bg-gray-900/50">
+          <ToolbarButton label="Skills & Agents" icon="⚡" active={skillsOpen} onClick={() => setSkillsOpen(!skillsOpen)} />
+        </div>
+        <div className="flex-1 flex min-h-0">
+          <MainPanel
+            onNewSession={() => setSpawnOpen(true)}
+            sendInput={sendInput}
+            approve={approve}
+            deny={deny}
+            onClose={handleClose}
+            onRetry={handleRetry}
+            onRename={handleRename}
+          />
+          <SkillsBrowser open={skillsOpen} onClose={() => setSkillsOpen(false)} />
+        </div>
+      </div>
       <SpawnDialog
         open={spawnOpen}
         onClose={() => setSpawnOpen(false)}
