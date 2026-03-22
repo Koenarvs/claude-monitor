@@ -1,5 +1,6 @@
 import { useSessionState } from '../context/SessionContext';
 import { SessionHeader } from './SessionHeader';
+import { SubagentList } from './SubagentList';
 import { MessageStream } from './MessageStream';
 import { InputBar } from './InputBar';
 import type { SessionView } from '../types';
@@ -46,6 +47,7 @@ export function MainPanel({ onNewSession, sendInput, approve, deny, onClose, onR
         onClose={() => onClose(session.id)}
         onRetry={() => onRetry(session.id)}
       />
+      <SubagentList subagents={session.subagents || []} />
       <MessageStream
         messages={session.messages}
         approve={(requestId) => approve(session.id, requestId)}

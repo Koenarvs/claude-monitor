@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, type ReactNode, type Dispatch } from 'react';
-import type { SessionView, SessionStatus, Message } from '../types';
+import type { SessionView, SessionStatus, Message, SubagentInfo } from '../types';
 
 interface AppState {
   sessions: Map<string, SessionView>;
@@ -14,7 +14,8 @@ type Action =
   | { type: 'SESSION_APPROVAL'; id: string; message: Message }
   | { type: 'SESSION_REMOVED'; id: string }
   | { type: 'SET_ACTIVE'; id: string }
-  | { type: 'RENAME_SESSION'; id: string; name: string };
+  | { type: 'RENAME_SESSION'; id: string; name: string }
+  | { type: 'SESSION_SUBAGENT'; id: string; subagent: SubagentInfo };
 
 function reducer(state: AppState, action: Action): AppState {
   const sessions = new Map(state.sessions);
@@ -73,6 +74,16 @@ function reducer(state: AppState, action: Action): AppState {
       const s = sessions.get(action.id);
       if (!s) return state;
       sessions.set(action.id, { ...s, name: action.name });
+      return { ...state, sessions };
+    }
+    case 'SESSION_SUBAGENT': {
+      const s = sessions.get(action.id);
+      if (!s) return state;
+      const existing = s.subagents?.findIndex(sa => sa.toolUseId === action.subagent.toolUseId) ?? -1;
+      const updatedSubagents = existing >= 0
+        ? (s.subagents || []).map((sa, i) => i === existing ? action.subagent : sa)
+        : [...(s.subagents || []), action.subagent];
+      sessions.set(action.id, { ...s, subagents: updatedSubagents });
       return { ...state, sessions };
     }
     default:

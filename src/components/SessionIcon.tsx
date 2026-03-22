@@ -27,14 +27,22 @@ export function SessionIcon({ session, isActive, onClick }: Props) {
   const borderColor = STATUS_COLORS[session.status];
   const pulse = PULSE_STATUSES.includes(session.status) ? 'animate-pulse' : '';
   const activeBg = isActive ? 'bg-gray-700' : 'bg-gray-800 hover:bg-gray-750';
+  const runningCount = (session.subagents || []).filter(sa => sa.status === 'running').length;
 
   return (
-    <button
-      onClick={onClick}
-      title={`${session.name}\n${session.status}`}
-      className={`w-8 h-8 rounded-md border-2 ${borderColor} ${pulse} ${activeBg} flex items-center justify-center text-[10px] font-bold text-gray-300 transition-colors`}
-    >
-      {getInitials(session.name)}
-    </button>
+    <div className="relative">
+      <button
+        onClick={onClick}
+        title={`${session.name}\n${session.status}`}
+        className={`w-8 h-8 rounded-md border-2 ${borderColor} ${pulse} ${activeBg} flex items-center justify-center text-[10px] font-bold text-gray-300 transition-colors`}
+      >
+        {getInitials(session.name)}
+      </button>
+      {runningCount > 0 && (
+        <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-500 text-white text-[9px] font-bold flex items-center justify-center pointer-events-none">
+          {runningCount}
+        </span>
+      )}
+    </div>
   );
 }

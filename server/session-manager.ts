@@ -58,6 +58,7 @@ export class SessionManager {
       turns: 0,
       activeGenerator: null,
       pendingApproval: null,
+      subagents: [],
     };
 
     this.sessions.set(id, session);

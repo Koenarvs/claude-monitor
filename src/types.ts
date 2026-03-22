@@ -18,6 +18,14 @@ export interface Message {
   approval?: 'pending' | 'approved' | 'denied';
 }
 
+export interface SubagentInfo {
+  toolUseId: string;
+  description: string;
+  status: 'running' | 'done';
+  startedAt: number;
+  completedAt?: number;
+}
+
 export interface SessionView {
   id: string;
   sdkSessionId: string | null;
@@ -30,4 +38,5 @@ export interface SessionView {
   messages: Message[];
   cost: number;
   turns: number;
+  subagents: SubagentInfo[];
 }

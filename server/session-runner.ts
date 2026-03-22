@@ -1,7 +1,7 @@
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import type { Options, HookInput, HookJSONOutput } from '@anthropic-ai/claude-agent-sdk';
 import { v4 as uuid } from 'uuid';
-import type { SessionRuntime, Message } from './types.js';
+import type { SessionRuntime, Message, SubagentInfo } from './types.js';
 import { writeSessionLog } from './vault-logger.js';
 
 type BroadcastFn = (sessionId: string, event: string, data: any) => void;
@@ -117,6 +117,24 @@ export async function runSession(
             };
             session.messages.push(msg);
             broadcast(session.id, 'session:message', { id: session.id, message: msg });
+
+            // Track Agent subagent spawns
+            if (block.name === 'Agent') {
+              const input = block.input as Record<string, unknown>;
+              const description = typeof input?.prompt === 'string'
+                ? input.prompt.slice(0, 200)
+                : typeof input?.description === 'string'
+                  ? input.description.slice(0, 200)
+                  : 'Subagent';
+              const subagent: SubagentInfo = {
+                toolUseId: block.id,
+                description,
+                status: 'running',
+                startedAt: Date.now(),
+              };
+              session.subagents.push(subagent);
+              broadcast(session.id, 'session:subagent', { id: session.id, subagent });
+            }
           }
         }
       }
@@ -138,6 +156,14 @@ export async function runSession(
               };
               session.messages.push(msg);
               broadcast(session.id, 'session:message', { id: session.id, message: msg });
+
+              // Check if this completes a subagent
+              const subagent = session.subagents.find(sa => sa.toolUseId === block.tool_use_id);
+              if (subagent) {
+                subagent.status = 'done';
+                subagent.completedAt = Date.now();
+                broadcast(session.id, 'session:subagent', { id: session.id, subagent: { ...subagent } });
+              }
             }
           }
         }

@@ -49,6 +49,9 @@ export function useSessionSocket() {
         case 'session:renamed':
           dispatch({ type: 'RENAME_SESSION', id: data.id, name: data.name });
           break;
+        case 'session:subagent':
+          dispatch({ type: 'SESSION_SUBAGENT', id: data.id, subagent: data.subagent });
+          break;
         case 'session:removed':
           dispatch({ type: 'SESSION_REMOVED', id: data.id });
           break;

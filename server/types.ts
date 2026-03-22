@@ -18,6 +18,14 @@ export interface Message {
   approval?: 'pending' | 'approved' | 'denied';
 }
 
+export interface SubagentInfo {
+  toolUseId: string;
+  description: string;
+  status: 'running' | 'done';
+  startedAt: number;
+  completedAt?: number;
+}
+
 export interface PendingApproval {
   requestId: string;
   toolName: string;
@@ -39,6 +47,7 @@ export interface SessionRuntime {
   turns: number;
   activeGenerator: AsyncGenerator<any, any, any> | null;
   pendingApproval: PendingApproval | null;
+  subagents: SubagentInfo[];
 }
 
 export interface SessionView {
@@ -53,6 +62,7 @@ export interface SessionView {
   messages: Message[];
   cost: number;
   turns: number;
+  subagents: SubagentInfo[];
 }
 
 export function toSessionView(s: SessionRuntime): SessionView {
@@ -68,5 +78,6 @@ export function toSessionView(s: SessionRuntime): SessionView {
     messages: s.messages,
     cost: s.cost,
     turns: s.turns,
+    subagents: s.subagents,
   };
 }
