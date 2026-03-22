@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { SessionManager } from './session-manager.js';
 import { scanSkillsAndAgents } from './skills-scanner.js';
 import { readClaudeMd, writeClaudeMd } from './claude-md.js';
+import { loadConfig, saveConfig, clearConfigCache } from './config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '3002', 10);
@@ -94,6 +95,21 @@ app.put('/api/claude-md', async (req, res) => {
   if (!cwd || content === undefined) { res.status(400).json({ error: 'cwd and content required' }); return; }
   try {
     await writeClaudeMd(cwd, content);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+// Config
+app.get('/api/config', async (_req, res) => {
+  const config = await loadConfig();
+  res.json(config);
+});
+
+app.put('/api/config', async (req, res) => {
+  try {
+    await saveConfig(req.body);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });

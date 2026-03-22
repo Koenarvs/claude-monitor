@@ -1,6 +1,11 @@
-import { useState, type KeyboardEvent } from 'react';
+import { useState, useEffect, type KeyboardEvent } from 'react';
 import type { PermissionMode } from '../types';
 import { ContextPreview } from './ContextPreview';
+
+interface WorkingDirectory {
+  label: string;
+  path: string;
+}
 
 interface Props {
   open: boolean;
@@ -9,10 +14,25 @@ interface Props {
 }
 
 export function SpawnDialog({ open, onClose, onSpawn }: Props) {
-  const [cwd, setCwd] = useState('C:/Users/Koena');
+  const [cwd, setCwd] = useState('');
   const [prompt, setPrompt] = useState('');
   const [mode, setMode] = useState<PermissionMode>('autonomous');
   const [includeContext, setIncludeContext] = useState(true);
+  const [directories, setDirectories] = useState<WorkingDirectory[]>([]);
+  const [defaultCwd, setDefaultCwd] = useState('C:/Users/Koena');
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/config')
+      .then(r => r.json())
+      .then(config => {
+        setDirectories(config.workingDirectories || []);
+        setDefaultCwd(config.defaultCwd || 'C:/Users/Koena');
+        if (!cwd) setCwd(config.defaultCwd || 'C:/Users/Koena');
+        if (config.defaultPermissionMode) setMode(config.defaultPermissionMode);
+      })
+      .catch(() => {});
+  }, []);
 
   if (!open) return null;
 
@@ -30,6 +50,19 @@ export function SpawnDialog({ open, onClose, onSpawn }: Props) {
     if (e.key === 'Escape') onClose();
   };
 
+  const handleSelectDirectory = (path: string) => {
+    setCwd(path);
+    setShowDropdown(false);
+  };
+
+  // Filter directories based on current input
+  const filtered = cwd
+    ? directories.filter(d =>
+        d.label.toLowerCase().includes(cwd.toLowerCase()) ||
+        d.path.toLowerCase().includes(cwd.toLowerCase())
+      )
+    : directories;
+
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={onClose}>
       <div
@@ -39,14 +72,40 @@ export function SpawnDialog({ open, onClose, onSpawn }: Props) {
       >
         <h2 className="text-lg font-semibold text-gray-100">New Session</h2>
 
-        <div>
+        <div className="relative">
           <label className="text-xs text-gray-400 uppercase block mb-1">Working Directory</label>
-          <input
-            className="w-full bg-gray-800 text-gray-100 px-3 py-2 rounded text-sm"
-            value={cwd}
-            onChange={(e) => setCwd(e.target.value)}
-            placeholder="C:/Users/Koena/my-project"
-          />
+          <div className="flex gap-1">
+            <input
+              className="flex-1 bg-gray-800 text-gray-100 px-3 py-2 rounded text-sm"
+              value={cwd}
+              onChange={(e) => { setCwd(e.target.value); setShowDropdown(true); }}
+              onFocus={() => setShowDropdown(true)}
+              placeholder="C:/Users/Koena/my-project"
+            />
+            {directories.length > 0 && (
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="px-2 py-2 bg-gray-800 hover:bg-gray-700 rounded text-gray-400 text-sm"
+                title="Saved directories"
+              >
+                ▾
+              </button>
+            )}
+          </div>
+          {showDropdown && filtered.length > 0 && (
+            <div className="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-700 rounded shadow-lg max-h-48 overflow-y-auto">
+              {filtered.map(d => (
+                <button
+                  key={d.path}
+                  onClick={() => handleSelectDirectory(d.path)}
+                  className="w-full text-left px-3 py-2 hover:bg-gray-700 transition-colors"
+                >
+                  <div className="text-sm text-gray-200">{d.label}</div>
+                  <div className="text-xs text-gray-500 truncate">{d.path}</div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>
