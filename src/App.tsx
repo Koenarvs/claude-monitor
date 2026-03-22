@@ -7,6 +7,7 @@ import { SpawnDialog } from './components/SpawnDialog';
 import { ToolbarButton } from './components/ToolbarButton';
 import { SkillsBrowser } from './components/SkillsBrowser';
 import { ClaudeMdPanel } from './components/ClaudeMdPanel';
+import { ExtensionsPanel } from './components/ExtensionsPanel';
 import { requestNotificationPermission, notifySessionNeedsAttention, updateTabTitle } from './utils/notifications';
 import type { PermissionMode } from './types';
 
@@ -14,6 +15,7 @@ function AppContent() {
   const [spawnOpen, setSpawnOpen] = useState(false);
   const [skillsOpen, setSkillsOpen] = useState(false);
   const [claudeMdOpen, setClaudeMdOpen] = useState(false);
+  const [extensionsOpen, setExtensionsOpen] = useState(false);
   const { sendInput, approve, deny } = useSessionSocket();
   const { sessions, activeSessionId } = useSessionState();
   const activeSession = activeSessionId ? sessions.get(activeSessionId) : undefined;
@@ -67,6 +69,7 @@ function AppContent() {
         <div className="flex items-center gap-1 px-2 py-1 border-b border-gray-800 bg-gray-900/50">
           <ToolbarButton label="Skills & Agents" icon="⚡" active={skillsOpen} onClick={() => setSkillsOpen(!skillsOpen)} />
           <ToolbarButton label="CLAUDE.md" icon="📋" active={claudeMdOpen} onClick={() => setClaudeMdOpen(!claudeMdOpen)} />
+          <ToolbarButton label="Extensions" icon="🔌" active={extensionsOpen} onClick={() => setExtensionsOpen(!extensionsOpen)} />
         </div>
         <div className="flex-1 flex min-h-0">
           <MainPanel
@@ -80,6 +83,7 @@ function AppContent() {
           />
           <SkillsBrowser open={skillsOpen} onClose={() => setSkillsOpen(false)} />
           <ClaudeMdPanel open={claudeMdOpen} onClose={() => setClaudeMdOpen(false)} cwd={activeSession?.cwd ?? null} />
+          <ExtensionsPanel open={extensionsOpen} onClose={() => setExtensionsOpen(false)} />
         </div>
       </div>
       <SpawnDialog

@@ -7,6 +7,7 @@ import { SessionManager } from './session-manager.js';
 import { scanSkillsAndAgents } from './skills-scanner.js';
 import { readClaudeMd, writeClaudeMd } from './claude-md.js';
 import { loadConfig, saveConfig, clearConfigCache } from './config.js';
+import { scanConfig } from './config-scanner.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '3002', 10);
@@ -114,6 +115,12 @@ app.put('/api/config', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
   }
+});
+
+// Extensions (MCP servers, plugins, hooks)
+app.get('/api/extensions', async (_req, res) => {
+  const overview = await scanConfig();
+  res.json(overview);
 });
 
 // Serve built frontend in production
