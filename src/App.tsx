@@ -6,14 +6,17 @@ import { MainPanel } from './components/MainPanel';
 import { SpawnDialog } from './components/SpawnDialog';
 import { ToolbarButton } from './components/ToolbarButton';
 import { SkillsBrowser } from './components/SkillsBrowser';
+import { ClaudeMdPanel } from './components/ClaudeMdPanel';
 import { requestNotificationPermission, notifySessionNeedsAttention, updateTabTitle } from './utils/notifications';
 import type { PermissionMode } from './types';
 
 function AppContent() {
   const [spawnOpen, setSpawnOpen] = useState(false);
   const [skillsOpen, setSkillsOpen] = useState(false);
+  const [claudeMdOpen, setClaudeMdOpen] = useState(false);
   const { sendInput, approve, deny } = useSessionSocket();
-  const { sessions } = useSessionState();
+  const { sessions, activeSessionId } = useSessionState();
+  const activeSession = activeSessionId ? sessions.get(activeSessionId) : undefined;
 
   useEffect(() => {
     requestNotificationPermission();
@@ -29,12 +32,12 @@ function AppContent() {
     updateTabTitle(count);
   }, [sessions]);
 
-  const handleSpawn = async (cwd: string, prompt: string, permissionMode: PermissionMode) => {
+  const handleSpawn = async (cwd: string, prompt: string, permissionMode: PermissionMode, includeContext: boolean) => {
     try {
       await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cwd, prompt, permissionMode }),
+        body: JSON.stringify({ cwd, prompt, permissionMode, includeContext }),
       });
     } catch (err) {
       console.error('Failed to spawn session:', err);
@@ -63,6 +66,7 @@ function AppContent() {
       <div className="flex-1 flex flex-col min-w-0">
         <div className="flex items-center gap-1 px-2 py-1 border-b border-gray-800 bg-gray-900/50">
           <ToolbarButton label="Skills & Agents" icon="⚡" active={skillsOpen} onClick={() => setSkillsOpen(!skillsOpen)} />
+          <ToolbarButton label="CLAUDE.md" icon="📋" active={claudeMdOpen} onClick={() => setClaudeMdOpen(!claudeMdOpen)} />
         </div>
         <div className="flex-1 flex min-h-0">
           <MainPanel
@@ -75,6 +79,7 @@ function AppContent() {
             onRename={handleRename}
           />
           <SkillsBrowser open={skillsOpen} onClose={() => setSkillsOpen(false)} />
+          <ClaudeMdPanel open={claudeMdOpen} onClose={() => setClaudeMdOpen(false)} cwd={activeSession?.cwd ?? null} />
         </div>
       </div>
       <SpawnDialog
