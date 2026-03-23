@@ -8,6 +8,10 @@ import { loadConfig } from './config.js';
 export async function writeSessionLog(session: SessionRuntime): Promise<string> {
   const config = await loadConfig();
   const vaultPath = config.vaultPath;
+  if (!vaultPath) {
+    logger.debug('Vault logging disabled (no vaultPath configured)');
+    return '';
+  }
   await mkdir(vaultPath, { recursive: true });
 
   const now = new Date();

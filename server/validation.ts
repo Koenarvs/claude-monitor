@@ -30,8 +30,9 @@ export const SaveConfigSchema = z.object({
     label: z.string().min(1),
     path: z.string().min(1),
   })),
-  vaultPath: z.string().min(1),
+  vaultPath: z.string().default(''),
   maxSessions: z.number().int().min(1).max(20),
+  approvalTimeoutMinutes: z.number().int().min(1).max(120).default(30),
 });
 
 // Re-export for config.ts usage

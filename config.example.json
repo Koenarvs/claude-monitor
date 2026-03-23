@@ -1,14 +1,10 @@
 {
-  "defaultCwd": "C:/Users/Koena",
+  "defaultCwd": "~/projects",
   "defaultPermissionMode": "autonomous",
   "workingDirectories": [
-    { "label": "Claude Monitor", "path": "C:/Users/Koena/claude-monitor" },
-    { "label": "Greyhawk Table", "path": "C:/Users/Koena/greyhawk-table" },
-    { "label": "Claude Claw", "path": "C:/Users/Koena/claude-claw" },
-    { "label": "PDF Pipeline", "path": "D:/GitHub/pdf-pipeline" },
-    { "label": "Obsidian Vault", "path": "D:/greyhawk-grand-campaign" },
-    { "label": "IdeaScout", "path": "D:/GitHub/ideascout-agent" }
+    { "label": "My Project", "path": "/path/to/project" }
   ],
-  "vaultPath": "D:/greyhawk-grand-campaign/_claude-memory/sessions",
-  "maxSessions": 10
+  "vaultPath": "",
+  "maxSessions": 10,
+  "approvalTimeoutMinutes": 30
 }

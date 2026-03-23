@@ -4,6 +4,7 @@ import { v4 as uuid } from 'uuid';
 import type { SessionRuntime, Message, SubagentInfo } from './types.js';
 import { logger } from './logger.js';
 import { writeSessionLog } from './vault-logger.js';
+import { loadConfig } from './config.js';
 
 type BroadcastFn = (sessionId: string, event: string, data: any) => void;
 
@@ -50,9 +51,34 @@ export async function runSession(
             lastActivityAt: Date.now(),
           });
 
-          // Wait for user decision
+          // Wait for user decision (with configurable timeout)
+          const config = await loadConfig();
+          const timeoutMs = config.approvalTimeoutMinutes * 60 * 1000;
+
           const approved = await new Promise<boolean>((resolve) => {
-            session.pendingApproval = { requestId, toolName, toolArgs, resolve };
+            const timer = setTimeout(() => {
+              // Auto-deny on timeout
+              if (session.pendingApproval?.requestId === requestId) {
+                session.pendingApproval = null;
+                const timeoutMsg: Message = {
+                  id: uuid(),
+                  type: 'system',
+                  content: `Approval auto-denied: no response after ${config.approvalTimeoutMinutes} minutes`,
+                  timestamp: Date.now(),
+                };
+                session.messages.push(timeoutMsg);
+                broadcast(session.id, 'session:message', { id: session.id, message: timeoutMsg });
+                resolve(false);
+              }
+            }, timeoutMs);
+
+            session.pendingApproval = {
+              requestId, toolName, toolArgs,
+              resolve: (value: boolean) => {
+                clearTimeout(timer);
+                resolve(value);
+              },
+            };
           });
           session.pendingApproval = null;
 

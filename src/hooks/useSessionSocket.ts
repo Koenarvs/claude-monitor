@@ -62,6 +62,10 @@ export function useSessionSocket() {
       }
     };
 
+    ws.onerror = (e) => {
+      console.error('WebSocket error:', e);
+    };
+
     ws.onclose = () => {
       reconnectTimer.current = setTimeout(() => {
         reconnectDelay.current = Math.min(reconnectDelay.current * 2, 30000);

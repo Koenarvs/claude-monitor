@@ -202,9 +202,13 @@ export class SessionManager {
 
     // Remove from active map after a short delay (let clients process the status change)
     setTimeout(() => {
-      this.sessions.delete(id);
-      this.store.deleteSession(id);
-      this.broadcast(id, 'session:removed', { id });
+      try {
+        this.sessions.delete(id);
+        this.store.deleteSession(id);
+        this.broadcast(id, 'session:removed', { id });
+      } catch (err) {
+        logger.error({ err, sessionId: id }, 'Failed to clean up session');
+      }
     }, 1000);
   }
 

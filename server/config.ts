@@ -1,6 +1,7 @@
 import { readFile, writeFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { homedir } from 'os';
 import { AppConfigSchema, type AppConfig } from './validation.js';
 import { logger } from './logger.js';
 
@@ -8,11 +9,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = join(__dirname, '..', 'config.json');
 
 const DEFAULT_CONFIG: AppConfig = {
-  defaultCwd: process.cwd(),
-  defaultPermissionMode: 'supervised',
+  defaultCwd: homedir(),
+  defaultPermissionMode: 'autonomous',
   workingDirectories: [],
   vaultPath: '',
   maxSessions: 10,
+  approvalTimeoutMinutes: 30,
 };
 
 let cached: AppConfig | null = null;
@@ -31,6 +33,13 @@ export async function loadConfig(): Promise<AppConfig> {
     cached = parsed.data;
     return cached;
   } catch {
+    // First run — write defaults so user has a template
+    logger.info('No config.json found, creating with defaults');
+    try {
+      await writeFile(CONFIG_PATH, JSON.stringify(DEFAULT_CONFIG, null, 2), 'utf-8');
+    } catch (writeErr) {
+      logger.warn({ err: writeErr }, 'Could not write default config.json');
+    }
     cached = DEFAULT_CONFIG;
     return cached;
   }
