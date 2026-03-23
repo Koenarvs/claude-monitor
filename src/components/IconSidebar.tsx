@@ -31,6 +31,13 @@ export function IconSidebar({ onNewSession }: Props) {
 
   return (
     <div className="w-12 bg-gray-900 border-r border-gray-800 flex flex-col items-center py-2 gap-2">
+      <img
+        src="/icons/logo-512.png"
+        alt="Claude Monitor"
+        className="w-8 h-8 mb-1 opacity-80"
+        title="Claude Monitor"
+      />
+      <div className="w-6 border-t border-gray-700 mb-1" />
       {sorted.map((s) => (
         <SessionIcon
           key={s.id}
@@ -42,10 +49,10 @@ export function IconSidebar({ onNewSession }: Props) {
       <div className="mt-auto">
         <button
           onClick={onNewSession}
-          className="w-8 h-8 rounded-md bg-gray-800 hover:bg-gray-700 border border-gray-700 flex items-center justify-center text-gray-400 text-lg transition-colors"
+          className="w-8 h-8 rounded-md bg-gray-800 hover:bg-gray-700 border border-gray-700 flex items-center justify-center transition-colors"
           title="New Session"
         >
-          +
+          <img src="/icons/spawn.png" alt="New Session" className="w-5 h-5" />
         </button>
       </div>
     </div>

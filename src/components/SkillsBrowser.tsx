@@ -80,7 +80,7 @@ export function SkillsBrowser({ open, onClose, onRefine }: Props) {
                 className="text-[10px] px-2 py-1 bg-amber-800 hover:bg-amber-700 rounded text-amber-200 transition-colors"
                 title={`Run /skill-creator to optimize ${s.name}'s description and evaluate performance`}
               >
-                Refine
+                <img src="/icons/refine.png" alt="" className="w-3 h-3 inline mr-1" />Refine
               </button>
             </div>
           </div>

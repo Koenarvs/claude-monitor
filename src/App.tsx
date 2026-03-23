@@ -87,9 +87,9 @@ function AppContent() {
       <IconSidebar onNewSession={() => setSpawnOpen(true)} />
       <div className="flex-1 flex flex-col min-w-0">
         <div className="flex items-center gap-1 px-2 py-1 border-b border-gray-800 bg-gray-900/50">
-          <ToolbarButton label="Skills & Agents" icon="⚡" active={skillsOpen} onClick={() => setSkillsOpen(!skillsOpen)} />
-          <ToolbarButton label="CLAUDE.md" icon="📋" active={claudeMdOpen} onClick={() => setClaudeMdOpen(!claudeMdOpen)} />
-          <ToolbarButton label="Extensions" icon="🔌" active={extensionsOpen} onClick={() => setExtensionsOpen(!extensionsOpen)} />
+          <ToolbarButton label="Skills & Agents" icon="/icons/skills.png" active={skillsOpen} onClick={() => setSkillsOpen(!skillsOpen)} />
+          <ToolbarButton label="CLAUDE.md" icon="/icons/dashboard.png" active={claudeMdOpen} onClick={() => setClaudeMdOpen(!claudeMdOpen)} />
+          <ToolbarButton label="Extensions" icon="/icons/extensions.png" active={extensionsOpen} onClick={() => setExtensionsOpen(!extensionsOpen)} />
         </div>
         <div className="flex-1 flex min-h-0">
           <ErrorBoundary fallback={<div className="flex-1 flex items-center justify-center text-gray-500">Session panel crashed. Click Try again.</div>}>

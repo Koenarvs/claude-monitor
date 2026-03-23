@@ -46,19 +46,24 @@ export function SessionHeader({ session, onRename, onClose, onRetry }: Props) {
       </span>
 
       {session.compactionCount > 0 && (
-        <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-900 text-orange-300 font-bold" title="Context has been compacted — some earlier context may be summarized">
-          {session.compactionCount}x compacted
+        <span
+          className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-orange-900 text-orange-300 font-bold"
+          title="Context has been compacted — some earlier context may be summarized"
+        >
+          <img src="/icons/compaction.png" alt="" className="w-3 h-3" />
+          {session.compactionCount}x
         </span>
       )}
 
       {session.status === 'error' && (
-        <button onClick={onRetry} className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-500 rounded text-white">
-          Retry
+        <button onClick={onRetry} className="px-2 py-1 bg-amber-600 hover:bg-amber-500 rounded flex items-center gap-1" title="Retry">
+          <img src="/icons/active.png" alt="" className="w-4 h-4" />
+          <span className="text-xs text-white">Retry</span>
         </button>
       )}
 
-      <button onClick={onClose} className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-gray-300">
-        Close
+      <button onClick={onClose} className="w-7 h-7 bg-gray-700 hover:bg-gray-600 rounded flex items-center justify-center" title="Close session">
+        <img src="/icons/stop.png" alt="Close" className="w-4 h-4" />
       </button>
     </div>
   );
