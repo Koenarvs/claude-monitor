@@ -19,10 +19,10 @@ export interface AppConfig {
 }
 
 const DEFAULT_CONFIG: AppConfig = {
-  defaultCwd: 'C:/Users/Koena',
-  defaultPermissionMode: 'autonomous',
+  defaultCwd: process.cwd(),
+  defaultPermissionMode: 'supervised',
   workingDirectories: [],
-  vaultPath: 'D:/greyhawk-grand-campaign/_claude-memory/sessions',
+  vaultPath: '',
   maxSessions: 10,
 };
 

@@ -181,8 +181,11 @@ export class SessionManager {
         const filesChanged = s.messages
           .filter(m => m.type === 'tool_call' && m.toolName && ['Edit', 'Write'].includes(m.toolName))
           .map(m => {
-            const match = m.toolArgs?.match(/"file_path"\s*:\s*"([^"]+)"/);
-            return match?.[1];
+            if (!m.toolArgs) return undefined;
+            try {
+              const args = JSON.parse(m.toolArgs);
+              return typeof args.file_path === 'string' ? args.file_path : undefined;
+            } catch { return undefined; }
           })
           .filter(Boolean);
 

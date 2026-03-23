@@ -2,16 +2,17 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import type { SessionRuntime } from './types.js';
 import { summarizeSession } from './session-summarizer.js';
-
-const VAULT_PATH = 'D:/greyhawk-grand-campaign/_claude-memory/sessions';
+import { loadConfig } from './config.js';
 
 export async function writeSessionLog(session: SessionRuntime): Promise<string> {
-  await mkdir(VAULT_PATH, { recursive: true });
+  const config = await loadConfig();
+  const vaultPath = config.vaultPath;
+  await mkdir(vaultPath, { recursive: true });
 
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10);
   const filename = `${dateStr}_${session.id}.md`;
-  const filepath = join(VAULT_PATH, filename);
+  const filepath = join(vaultPath, filename);
 
   const started = new Date(session.createdAt);
   const durationMs = now.getTime() - session.createdAt;
@@ -73,13 +74,24 @@ export async function writeSessionLog(session: SessionRuntime): Promise<string> 
   return filepath;
 }
 
+function tryParseArgs(toolArgs: string | undefined): Record<string, unknown> | null {
+  if (!toolArgs) return null;
+  try {
+    return JSON.parse(toolArgs);
+  } catch {
+    return null;
+  }
+}
+
 function extractFilesChanged(session: SessionRuntime): string[] {
   const files = new Set<string>();
   for (const msg of session.messages) {
     if (msg.type === 'tool_call' && msg.toolName) {
-      if (['Edit', 'Write', 'NotebookEdit'].includes(msg.toolName) && msg.toolArgs) {
-        const match = msg.toolArgs.match(/"file_path"\s*:\s*"([^"]+)"/);
-        if (match) files.add(match[1]);
+      if (['Edit', 'Write', 'NotebookEdit'].includes(msg.toolName)) {
+        const args = tryParseArgs(msg.toolArgs);
+        if (args && typeof args.file_path === 'string') {
+          files.add(args.file_path);
+        }
       }
     }
   }
@@ -89,10 +101,10 @@ function extractFilesChanged(session: SessionRuntime): string[] {
 function extractCommandsRun(session: SessionRuntime): string[] {
   const commands: string[] = [];
   for (const msg of session.messages) {
-    if (msg.type === 'tool_call' && msg.toolName === 'Bash' && msg.toolArgs) {
-      const match = msg.toolArgs.match(/"command"\s*:\s*"([^"]+)"/);
-      if (match && commands.length < 20) {
-        commands.push(match[1].slice(0, 100));
+    if (msg.type === 'tool_call' && msg.toolName === 'Bash') {
+      const args = tryParseArgs(msg.toolArgs);
+      if (args && typeof args.command === 'string' && commands.length < 20) {
+        commands.push(args.command.slice(0, 100));
       }
     }
   }
