@@ -2,6 +2,7 @@ import { query } from '@anthropic-ai/claude-agent-sdk';
 import type { Options, HookInput, HookJSONOutput } from '@anthropic-ai/claude-agent-sdk';
 import { v4 as uuid } from 'uuid';
 import type { SessionRuntime, Message, SubagentInfo } from './types.js';
+import { logger } from './logger.js';
 import { writeSessionLog } from './vault-logger.js';
 
 type BroadcastFn = (sessionId: string, event: string, data: any) => void;
@@ -115,7 +116,7 @@ export async function runSession(
 
         // Trigger memory flush — write current session state to vault
         writeSessionLog(session).catch((err) =>
-          console.error(`Compaction memory flush failed for ${session.id}:`, err)
+          logger.error({ err, sessionId: session.id }, 'Compaction memory flush failed')
         );
       }
 
@@ -223,7 +224,7 @@ export async function runSession(
           broadcast(session.id, 'session:message', { id: session.id, message: budgetMsg });
           // Trigger vault log
           writeSessionLog(session).catch((err) =>
-            console.error(`Vault log failed for ${session.id}:`, err)
+            logger.error({ err, sessionId: session.id }, 'Vault log failed')
           );
         } else {
           // success, error_max_turns → needs_input (user can send more)

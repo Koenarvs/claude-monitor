@@ -1,6 +1,7 @@
 import { readdir, readFile, stat } from 'fs/promises';
 import { join, basename } from 'path';
 import { homedir } from 'os';
+import { logger } from './logger.js';
 
 export interface SkillInfo {
   name: string;
@@ -38,7 +39,7 @@ async function scanDirectory(dir: string, type: 'skill' | 'agent', scope: 'globa
               description = lines[0]?.trim().slice(0, 200) || '';
             }
             break;
-          } catch { /* file doesn't exist, try next */ }
+          } catch (err) { logger.warn({ err }, 'Failed to stat entry'); }
         }
 
         results.push({
@@ -50,8 +51,8 @@ async function scanDirectory(dir: string, type: 'skill' | 'agent', scope: 'globa
         });
       }
     }
-  } catch {
-    // Directory doesn't exist
+  } catch (err) {
+    logger.warn({ err }, 'Failed to scan directory');
   }
 
   return results;

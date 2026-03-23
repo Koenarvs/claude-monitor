@@ -1,4 +1,5 @@
 import { writeFile, mkdir } from 'fs/promises';
+import { logger } from './logger.js';
 import { join } from 'path';
 import type { SessionRuntime } from './types.js';
 import { summarizeSession } from './session-summarizer.js';
@@ -74,16 +75,7 @@ export async function writeSessionLog(session: SessionRuntime): Promise<string> 
   return filepath;
 }
 
-function tryParseArgs(toolArgs: string | undefined): Record<string, unknown> | null {
-  if (!toolArgs) return null;
-  try {
-    return JSON.parse(toolArgs);
-  } catch {
-    return null;
-  }
-}
-
-function extractFilesChanged(session: SessionRuntime): string[] {
+export function extractFilesChanged(session: SessionRuntime): string[] {
   const files = new Set<string>();
   for (const msg of session.messages) {
     if (msg.type === 'tool_call' && msg.toolName) {
@@ -98,7 +90,7 @@ function extractFilesChanged(session: SessionRuntime): string[] {
   return [...files];
 }
 
-function extractCommandsRun(session: SessionRuntime): string[] {
+export function extractCommandsRun(session: SessionRuntime): string[] {
   const commands: string[] = [];
   for (const msg of session.messages) {
     if (msg.type === 'tool_call' && msg.toolName === 'Bash') {

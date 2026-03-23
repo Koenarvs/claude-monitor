@@ -16,11 +16,14 @@ Local web app for managing multiple Claude Code sessions from a single dashboard
 ## Architecture
 - Server manages sessions via Agent SDK `query()` calls
 - WebSocket pushes real-time updates to browser
-- Sessions persisted to SQLite (`data/claude-monitor.db`) via better-sqlite3
-- Checkpoint on every state change — survives server restarts
-- Active sessions restored on startup; working sessions marked as error (retryable)
+- Sessions are in-memory (no database)
 - Session logs written to `D:/greyhawk-grand-campaign/_claude-memory/sessions/` on completion
 
 ## Ports
 - Express server: 3002
 - Vite dev: 5173 (proxies /api and /ws to 3002)
+
+## Testing
+- `npm test` — Run all tests once
+- `npm run test:watch` — Run tests in watch mode
+- Tests live in `tests/` mirroring `server/` and `client/` structure

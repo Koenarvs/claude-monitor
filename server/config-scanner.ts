@@ -2,6 +2,7 @@ import { readFile, readdir, stat } from 'fs/promises';
 import { join, basename } from 'path';
 import { homedir } from 'os';
 import { glob } from 'fs/promises';
+import { logger } from './logger.js';
 
 const CLAUDE_DIR = join(homedir(), '.claude');
 
@@ -37,7 +38,8 @@ async function readJsonFile(path: string): Promise<any> {
   try {
     const raw = await readFile(path, 'utf-8');
     return JSON.parse(raw);
-  } catch {
+  } catch (err) {
+    logger.warn({ err }, 'Failed to read JSON file');
     return {};
   }
 }
@@ -88,8 +90,8 @@ async function scanPlugins(): Promise<PluginInfo[]> {
         source: 'claude-plugins-official',
       });
     }
-  } catch {
-    // No plugins directory
+  } catch (err) {
+    logger.warn({ err }, 'Failed to scan plugins directory');
   }
 
   return results.sort((a, b) => a.name.localeCompare(b.name));
@@ -183,8 +185,8 @@ async function scanHooks(projectDirs?: string[]): Promise<HookInfo[]> {
           }
         }
       }
-    } catch {
-      // Directory doesn't exist
+    } catch (err) {
+      logger.warn({ err }, 'Failed to scan hookify rules');
     }
   }
 

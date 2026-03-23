@@ -9,6 +9,8 @@ import { scanSkillsAndAgents } from './skills-scanner.js';
 import { readClaudeMd, writeClaudeMd } from './claude-md.js';
 import { loadConfig, saveConfig, clearConfigCache } from './config.js';
 import { scanConfig } from './config-scanner.js';
+import { logger } from './logger.js';
+import { SpawnSessionSchema, RenameSessionSchema, UpdateClaudeMdSchema, SaveConfigSchema } from './validation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '3002', 10);
@@ -34,13 +36,14 @@ app.get('/api/sessions/:id', (req, res) => {
   res.json(session);
 });
 
-app.post('/api/sessions', (req, res) => {
+app.post('/api/sessions', async (req, res) => {
+  const parsed = SpawnSessionSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0].message });
+    return;
+  }
   try {
-    const { cwd, prompt, permissionMode, name, includeContext } = req.body;
-    if (!cwd || !prompt) {
-      res.status(400).json({ error: 'cwd and prompt are required' });
-      return;
-    }
+    const { cwd, prompt, permissionMode, name, includeContext } = parsed.data;
 
     let fullPrompt = prompt;
     if (includeContext) {
@@ -50,7 +53,7 @@ app.post('/api/sessions', (req, res) => {
       }
     }
 
-    const session = manager.spawn(cwd, fullPrompt, permissionMode || 'autonomous', name);
+    const session = await manager.spawn(cwd, fullPrompt, permissionMode, name);
     res.status(201).json(session);
   } catch (err) {
     res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
@@ -58,12 +61,12 @@ app.post('/api/sessions', (req, res) => {
 });
 
 app.patch('/api/sessions/:id', (req, res) => {
-  const { name } = req.body;
-  if (!name) {
-    res.status(400).json({ error: 'name is required' });
+  const parsed = RenameSessionSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0].message });
     return;
   }
-  manager.rename(req.params.id, name);
+  manager.rename(req.params.id, parsed.data.name);
   res.json({ ok: true });
 });
 
@@ -95,10 +98,13 @@ app.get('/api/claude-md', async (req, res) => {
 });
 
 app.put('/api/claude-md', async (req, res) => {
-  const { cwd, content } = req.body;
-  if (!cwd || content === undefined) { res.status(400).json({ error: 'cwd and content required' }); return; }
+  const parsed = UpdateClaudeMdSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0].message });
+    return;
+  }
   try {
-    await writeClaudeMd(cwd, content);
+    await writeClaudeMd(parsed.data.cwd, parsed.data.content);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
@@ -112,8 +118,13 @@ app.get('/api/config', async (_req, res) => {
 });
 
 app.put('/api/config', async (req, res) => {
+  const parsed = SaveConfigSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0].message });
+    return;
+  }
   try {
-    await saveConfig(req.body);
+    await saveConfig(parsed.data);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
@@ -162,13 +173,13 @@ wss.on('connection', (ws: WebSocket) => {
           break;
       }
     } catch (err) {
-      console.error('WebSocket message error:', err);
+      logger.error({ err }, 'WebSocket message error');
     }
   });
 });
 
 async function shutdown() {
-  console.log('Shutting down...');
+  logger.info('Shutting down...');
   const active = manager.list().filter(s => !['done', 'error'].includes(s.status));
   await Promise.allSettled(active.map(s => manager.kill(s.id)));
   store.markActiveAsError();
@@ -180,5 +191,5 @@ process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
 server.listen(PORT, () => {
-  console.log(`Claude Monitor server running on http://localhost:${PORT}`);
+  logger.info({ port: PORT }, 'Claude Monitor server running');
 });

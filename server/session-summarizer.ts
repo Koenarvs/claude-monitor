@@ -1,5 +1,6 @@
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import type { SessionRuntime } from './types.js';
+import { logger } from './logger.js';
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -67,7 +68,7 @@ One sentence describing what was accomplished.
 
     return await withTimeout(summarize(), 30000);
   } catch (err) {
-    console.error('Session summarization failed or timed out:', err);
+    logger.error({ err }, 'Session summarization failed or timed out');
     return '';  // Fall back to deterministic extraction
   }
 }

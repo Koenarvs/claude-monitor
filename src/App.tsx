@@ -3,6 +3,7 @@ import { SessionProvider, useSessionState } from './context/SessionContext';
 import { useSessionSocket } from './hooks/useSessionSocket';
 import { IconSidebar } from './components/IconSidebar';
 import { MainPanel } from './components/MainPanel';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { SpawnDialog } from './components/SpawnDialog';
 import { ToolbarButton } from './components/ToolbarButton';
 import { SkillsBrowser } from './components/SkillsBrowser';
@@ -91,15 +92,17 @@ function AppContent() {
           <ToolbarButton label="Extensions" icon="🔌" active={extensionsOpen} onClick={() => setExtensionsOpen(!extensionsOpen)} />
         </div>
         <div className="flex-1 flex min-h-0">
-          <MainPanel
-            onNewSession={() => setSpawnOpen(true)}
-            sendInput={sendInput}
-            approve={approve}
-            deny={deny}
-            onClose={handleClose}
-            onRetry={handleRetry}
-            onRename={handleRename}
-          />
+          <ErrorBoundary fallback={<div className="flex-1 flex items-center justify-center text-gray-500">Session panel crashed. Click Try again.</div>}>
+            <MainPanel
+              onNewSession={() => setSpawnOpen(true)}
+              sendInput={sendInput}
+              approve={approve}
+              deny={deny}
+              onClose={handleClose}
+              onRetry={handleRetry}
+              onRename={handleRename}
+            />
+          </ErrorBoundary>
           <SkillsBrowser open={skillsOpen} onClose={() => setSkillsOpen(false)} onRefine={handleRefineSkill} />
           <ClaudeMdPanel open={claudeMdOpen} onClose={() => setClaudeMdOpen(false)} cwd={activeSession?.cwd ?? null} />
           <ExtensionsPanel open={extensionsOpen} onClose={() => setExtensionsOpen(false)} />

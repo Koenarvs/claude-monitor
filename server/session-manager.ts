@@ -6,8 +6,8 @@ import { generateName, generateInitials } from './auto-namer.js';
 import { runSession } from './session-runner.js';
 import { writeSessionLog } from './vault-logger.js';
 import { SessionStore } from './db.js';
-
-const MAX_SESSIONS = 10;
+import { logger } from './logger.js';
+import { loadConfig } from './config.js';
 
 export class SessionManager {
   private sessions = new Map<string, SessionRuntime>();
@@ -22,7 +22,7 @@ export class SessionManager {
   private restoreSessions(): void {
     const purged = this.store.purgeOldSessions(7);
     if (purged > 0) {
-      console.log(`Purged ${purged} old session(s) from DB`);
+      logger.info({ count: purged }, 'Purged old sessions from DB');
     }
 
     const sessions = this.store.getActiveSessions();
@@ -62,7 +62,7 @@ export class SessionManager {
     }
 
     if (sessions.length > 0) {
-      console.log(`Restored ${sessions.length} session(s) from DB`);
+      logger.info({ count: sessions.length }, 'Restored sessions from DB');
     }
   }
 
@@ -105,7 +105,7 @@ export class SessionManager {
         // session:created, session:renamed, session:removed — no persistence here
       }
     } catch (err) {
-      console.error(`DB persist failed for ${event} on session ${sessionId}:`, err);
+      logger.error({ err, sessionId, event }, 'DB persist failed');
     }
 
     // Broadcast to WebSocket clients
@@ -126,9 +126,10 @@ export class SessionManager {
     return s ? toSessionView(s) : undefined;
   }
 
-  spawn(cwd: string, prompt: string, permissionMode: PermissionMode, customName?: string): SessionView {
-    if (this.sessions.size >= MAX_SESSIONS) {
-      throw new Error(`Maximum ${MAX_SESSIONS} concurrent sessions reached`);
+  async spawn(cwd: string, prompt: string, permissionMode: PermissionMode, customName?: string): Promise<SessionView> {
+    const config = await loadConfig();
+    if (this.sessions.size >= config.maxSessions) {
+      throw new Error(`Maximum ${config.maxSessions} concurrent sessions reached`);
     }
 
     const id = uuid();
@@ -160,7 +161,7 @@ export class SessionManager {
 
     // Start the session runner (non-blocking)
     runSession(session, prompt, this.broadcast.bind(this)).catch((err) => {
-      console.error(`Session ${id} runner failed:`, err);
+      logger.error({ err, sessionId: id }, 'Session runner failed');
     });
 
     return view;
@@ -189,7 +190,7 @@ export class SessionManager {
     try {
       await writeSessionLog(session);
     } catch (err) {
-      console.error(`Failed to write vault log for session ${id}:`, err);
+      logger.error({ err, sessionId: id }, 'Failed to write vault log');
     }
 
     this.broadcast(id, 'session:status', {
@@ -238,7 +239,7 @@ export class SessionManager {
 
     // Resume via new query() call
     runSession(session, text, this.broadcast.bind(this)).catch((err) => {
-      console.error(`Session ${id} resume failed:`, err);
+      logger.error({ err, sessionId: id }, 'Session resume failed');
     });
   }
 
@@ -309,7 +310,7 @@ export class SessionManager {
     });
 
     runSession(session, 'Continue from where you left off.', this.broadcast.bind(this)).catch((err) => {
-      console.error(`Session ${id} retry failed:`, err);
+      logger.error({ err, sessionId: id }, 'Session retry failed');
     });
   }
 }
