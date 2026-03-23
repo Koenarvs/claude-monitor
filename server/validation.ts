@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Reject paths containing '..' to prevent directory traversal
-const safePath = z.string().min(1).refine(
+export const safePath = z.string().min(1).refine(
   (p) => !p.split(/[\\/]/).includes('..'),
   { message: 'Path must not contain ".." segments' },
 );
@@ -37,6 +37,13 @@ export const SaveConfigSchema = z.object({
 
 // Re-export for config.ts usage
 export const AppConfigSchema = SaveConfigSchema;
+
+export const DirectoryQuerySchema = z.object({
+  path: z.string().default('').refine(
+    (p) => !p.split(/[\\/]/).includes('..'),
+    { message: 'Path must not contain ".." segments' },
+  ),
+});
 
 export type SpawnSessionInput = z.infer<typeof SpawnSessionSchema>;
 export type AppConfig = z.infer<typeof AppConfigSchema>;
