@@ -7,10 +7,11 @@ import { SessionManager } from './session-manager.js';
 import { SessionStore } from './db.js';
 import { scanSkillsAndAgents } from './skills-scanner.js';
 import { readClaudeMd, writeClaudeMd } from './claude-md.js';
-import { loadConfig, saveConfig, clearConfigCache } from './config.js';
+import { loadConfig, saveConfig } from './config.js';
 import { scanConfig } from './config-scanner.js';
 import { logger } from './logger.js';
-import { SpawnSessionSchema, RenameSessionSchema, UpdateClaudeMdSchema, SaveConfigSchema } from './validation.js';
+import { SpawnSessionSchema, RenameSessionSchema, UpdateClaudeMdSchema, SaveConfigSchema, DirectoryQuerySchema } from './validation.js';
+import { listDirectories } from './directories.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '3002', 10);
@@ -128,6 +129,26 @@ app.put('/api/config', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+// Directory browser
+app.get('/api/directories', async (req, res) => {
+  const parsed = DirectoryQuerySchema.safeParse({ path: req.query.path });
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0].message });
+    return;
+  }
+  try {
+    const listing = await listDirectories(parsed.data.path);
+    res.json(listing);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes('EACCES') || message.includes('permission')) {
+      res.status(403).json({ error: 'Permission denied' });
+    } else {
+      res.status(400).json({ error: message });
+    }
   }
 });
 
