@@ -14,6 +14,13 @@ export interface SkillInfo {
 const GLOBAL_SKILLS_DIR = join(homedir(), '.claude', 'skills');
 const GLOBAL_AGENTS_DIR = join(homedir(), '.claude', 'agents');
 
+function extractDescription(content: string): string {
+  const descMatch = content.match(/^description:\s*(.+)$/m);
+  if (descMatch) return descMatch[1].trim();
+  const lines = content.split('\n').filter(l => l.trim() && !l.startsWith('#') && !l.startsWith('---'));
+  return lines[0]?.trim().slice(0, 200) || '';
+}
+
 async function scanDirectory(dir: string, type: 'skill' | 'agent', scope: 'global' | 'project'): Promise<SkillInfo[]> {
   const results: SkillInfo[] = [];
 
@@ -31,15 +38,9 @@ async function scanDirectory(dir: string, type: 'skill' | 'agent', scope: 'globa
         for (const mdFile of mdFiles) {
           try {
             const content = await readFile(join(entryPath, mdFile), 'utf-8');
-            const descMatch = content.match(/^description:\s*(.+)$/m);
-            if (descMatch) {
-              description = descMatch[1].trim();
-            } else {
-              const lines = content.split('\n').filter(l => l.trim() && !l.startsWith('#') && !l.startsWith('---'));
-              description = lines[0]?.trim().slice(0, 200) || '';
-            }
+            description = extractDescription(content);
             break;
-          } catch (err) { logger.warn({ err }, 'Failed to stat entry'); }
+          } catch (err) { logger.warn({ err }, 'Failed to read skill file'); }
         }
 
         results.push({
@@ -49,6 +50,17 @@ async function scanDirectory(dir: string, type: 'skill' | 'agent', scope: 'globa
           type,
           scope,
         });
+      } else if (entryStat?.isFile() && entry.endsWith('.md')) {
+        try {
+          const content = await readFile(entryPath, 'utf-8');
+          results.push({
+            name: basename(entry, '.md'),
+            description: extractDescription(content),
+            path: entryPath,
+            type,
+            scope,
+          });
+        } catch (err) { logger.warn({ err, path: entryPath }, 'Failed to read skill file'); }
       }
     }
   } catch (err) {
