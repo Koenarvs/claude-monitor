@@ -79,6 +79,15 @@ export async function writeSessionLog(session: SessionRuntime): Promise<string> 
   return filepath;
 }
 
+function tryParseArgs(toolArgs: string | undefined): Record<string, unknown> | null {
+  if (!toolArgs) return null;
+  try {
+    return JSON.parse(toolArgs);
+  } catch {
+    return null;
+  }
+}
+
 export function extractFilesChanged(session: SessionRuntime): string[] {
   const files = new Set<string>();
   for (const msg of session.messages) {
