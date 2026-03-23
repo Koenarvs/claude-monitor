@@ -4,6 +4,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { SessionManager } from './session-manager.js';
+import { SessionStore } from './db.js';
 import { scanSkillsAndAgents } from './skills-scanner.js';
 import { readClaudeMd, writeClaudeMd } from './claude-md.js';
 import { loadConfig, saveConfig, clearConfigCache } from './config.js';
@@ -16,7 +17,8 @@ const server = createServer(app);
 
 app.use(express.json());
 
-const manager = new SessionManager();
+const store = new SessionStore(join(process.cwd(), 'data', 'claude-monitor.db'));
+const manager = new SessionManager(store);
 
 // REST API
 app.get('/api/sessions', (_req, res) => {
@@ -164,6 +166,18 @@ wss.on('connection', (ws: WebSocket) => {
     }
   });
 });
+
+async function shutdown() {
+  console.log('Shutting down...');
+  const active = manager.list().filter(s => !['done', 'error'].includes(s.status));
+  await Promise.allSettled(active.map(s => manager.kill(s.id)));
+  store.markActiveAsError();
+  store.close();
+  process.exit(0);
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
 server.listen(PORT, () => {
   console.log(`Claude Monitor server running on http://localhost:${PORT}`);
