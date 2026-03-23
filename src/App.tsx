@@ -9,6 +9,7 @@ import { ToolbarButton } from './components/ToolbarButton';
 import { SkillsBrowser } from './components/SkillsBrowser';
 import { ClaudeMdPanel } from './components/ClaudeMdPanel';
 import { ExtensionsPanel } from './components/ExtensionsPanel';
+import { SettingsPanel } from './components/SettingsPanel';
 import { requestNotificationPermission, notifySessionNeedsAttention, updateTabTitle } from './utils/notifications';
 import type { PermissionMode } from './types';
 
@@ -17,6 +18,7 @@ function AppContent() {
   const [skillsOpen, setSkillsOpen] = useState(false);
   const [claudeMdOpen, setClaudeMdOpen] = useState(false);
   const [extensionsOpen, setExtensionsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { sendInput, approve, deny } = useSessionSocket();
   const { sessions, activeSessionId } = useSessionState();
   const activeSession = activeSessionId ? sessions.get(activeSessionId) : undefined;
@@ -90,6 +92,15 @@ function AppContent() {
           <ToolbarButton label="Skills & Agents" icon="/icons/skills.png" active={skillsOpen} onClick={() => setSkillsOpen(!skillsOpen)} />
           <ToolbarButton label="CLAUDE.md" icon="/icons/dashboard.png" active={claudeMdOpen} onClick={() => setClaudeMdOpen(!claudeMdOpen)} />
           <ToolbarButton label="Extensions" icon="/icons/extensions.png" active={extensionsOpen} onClick={() => setExtensionsOpen(!extensionsOpen)} />
+          <div className="ml-auto">
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="w-8 h-8 rounded flex items-center justify-center bg-gray-800 hover:bg-gray-700 transition-colors"
+              title="Settings"
+            >
+              <img src="/icons/settings.png" alt="Settings" className="w-5 h-5" />
+            </button>
+          </div>
         </div>
         <div className="flex-1 flex min-h-0">
           <ErrorBoundary fallback={<div className="flex-1 flex items-center justify-center text-gray-500">Session panel crashed. Click Try again.</div>}>
@@ -112,6 +123,10 @@ function AppContent() {
         open={spawnOpen}
         onClose={() => setSpawnOpen(false)}
         onSpawn={handleSpawn}
+      />
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
       />
     </div>
   );
