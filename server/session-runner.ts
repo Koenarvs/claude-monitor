@@ -1,5 +1,5 @@
 import { query } from '@anthropic-ai/claude-agent-sdk';
-import type { Options, HookInput, HookJSONOutput } from '@anthropic-ai/claude-agent-sdk';
+import type { Options, HookInput, HookJSONOutput, SDKMessage, Query, PermissionRequestHookInput } from '@anthropic-ai/claude-agent-sdk';
 import { v4 as uuid } from 'uuid';
 import type { SessionRuntime, Message, SubagentInfo } from './types.js';
 import { logger } from './logger.js';
@@ -26,7 +26,7 @@ export async function runSession(
     options.hooks = {
       PermissionRequest: [{
         hooks: [async (input: HookInput, _toolUseID: string | undefined, _opts: { signal: AbortSignal }): Promise<HookJSONOutput> => {
-          const permInput = input as any;
+          const permInput = input as PermissionRequestHookInput;
           const requestId = uuid();
           const toolName = permInput.tool_name || 'unknown';
           const toolArgs = JSON.stringify(permInput.tool_input || {}, null, 2);
@@ -105,10 +105,10 @@ export async function runSession(
 
   try {
     const generator = query({ prompt, options });
-    session.activeGenerator = generator as any;
+    session.activeGenerator = generator as Query;
 
     for await (const message of generator) {
-      const m = message as any;
+      const m = message as SDKMessage;
       session.lastActivityAt = Date.now();
 
       if (m.type === 'system' && m.subtype === 'init') {
@@ -193,7 +193,7 @@ export async function runSession(
 
       if (m.type === 'user') {
         // Tool results from SDK
-        if (m.message?.content) {
+        if (Array.isArray(m.message?.content)) {
           for (const block of m.message.content) {
             if (block.type === 'tool_result') {
               const content = typeof block.content === 'string'
@@ -255,11 +255,11 @@ export async function runSession(
         } else {
           // success, error_max_turns → needs_input (user can send more)
           session.status = 'needs_input';
-          if (m.result) {
+          if ('result' in m && m.result) {
             const resultMsg: Message = {
               id: uuid(),
               type: 'system',
-              content: m.result,
+              content: m.result as string,
               timestamp: Date.now(),
             };
             session.messages.push(resultMsg);

@@ -45,7 +45,7 @@ export interface SessionRuntime {
   messages: Message[];
   cost: number;
   turns: number;
-  activeGenerator: AsyncGenerator<any, any, any> | null;
+  activeGenerator: AsyncGenerator<unknown> | null;
   pendingApproval: PendingApproval | null;
   subagents: SubagentInfo[];
   compactionCount: number;
