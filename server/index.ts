@@ -10,7 +10,7 @@ import { readClaudeMd, writeClaudeMd } from './claude-md.js';
 import { loadConfig, saveConfig } from './config.js';
 import { scanConfig } from './config-scanner.js';
 import { logger } from './logger.js';
-import { SpawnSessionSchema, RenameSessionSchema, UpdateClaudeMdSchema, SaveConfigSchema, DirectoryQuerySchema } from './validation.js';
+import { SpawnSessionSchema, RenameSessionSchema, UpdateClaudeMdSchema, SaveConfigSchema, DirectoryQuerySchema, WsMessageSchema } from './validation.js';
 import { listDirectories } from './directories.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -180,7 +180,12 @@ wss.on('connection', (ws: WebSocket) => {
 
   ws.on('message', async (raw: Buffer) => {
     try {
-      const { event, data } = JSON.parse(raw.toString());
+      const parsed = WsMessageSchema.safeParse(JSON.parse(raw.toString()));
+      if (!parsed.success) {
+        logger.warn({ issues: parsed.error.issues }, 'Invalid WebSocket message');
+        return;
+      }
+      const { event, data } = parsed.data;
 
       switch (event) {
         case 'session:input':

@@ -45,5 +45,20 @@ export const DirectoryQuerySchema = z.object({
   ),
 });
 
+export const WsMessageSchema = z.discriminatedUnion('event', [
+  z.object({
+    event: z.literal('session:input'),
+    data: z.object({ id: z.string(), text: z.string() }),
+  }),
+  z.object({
+    event: z.literal('session:approve'),
+    data: z.object({ id: z.string(), requestId: z.string() }),
+  }),
+  z.object({
+    event: z.literal('session:deny'),
+    data: z.object({ id: z.string(), requestId: z.string() }),
+  }),
+]);
+
 export type SpawnSessionInput = z.infer<typeof SpawnSessionSchema>;
 export type AppConfig = z.infer<typeof AppConfigSchema>;

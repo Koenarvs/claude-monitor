@@ -4,6 +4,7 @@ import {
   RenameSessionSchema,
   UpdateClaudeMdSchema,
   AppConfigSchema,
+  WsMessageSchema,
 } from '../../server/validation.js';
 
 describe('SpawnSessionSchema', () => {
@@ -125,6 +126,45 @@ describe('AppConfigSchema', () => {
       vaultPath: '/vault',
       maxSessions: 25,
     });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('WsMessageSchema', () => {
+  it('accepts valid session:input', () => {
+    const result = WsMessageSchema.safeParse({
+      event: 'session:input',
+      data: { id: 'abc', text: 'hello' },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts valid session:approve', () => {
+    const result = WsMessageSchema.safeParse({
+      event: 'session:approve',
+      data: { id: 'abc', requestId: 'req1' },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects unknown event', () => {
+    const result = WsMessageSchema.safeParse({
+      event: 'session:unknown',
+      data: { id: 'abc' },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects missing data fields', () => {
+    const result = WsMessageSchema.safeParse({
+      event: 'session:input',
+      data: { id: 'abc' },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects non-object', () => {
+    const result = WsMessageSchema.safeParse('not an object');
     expect(result.success).toBe(false);
   });
 });
