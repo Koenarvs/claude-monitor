@@ -82,8 +82,11 @@ app.post('/api/sessions/:id/retry', async (req, res) => {
 });
 
 app.get('/api/skills', async (_req, res) => {
-  const projectDirs = manager.list().map(s => s.cwd);
-  const skills = await scanSkillsAndAgents(projectDirs);
+  const config = await loadConfig();
+  const sessionDirs = manager.list().map(s => s.cwd);
+  const configDirs = config.workingDirectories.map(d => d.path);
+  const allDirs = [...new Set([...sessionDirs, ...configDirs])];
+  const skills = await scanSkillsAndAgents(allDirs);
   res.json(skills);
 });
 
@@ -154,8 +157,11 @@ app.get('/api/directories', async (req, res) => {
 
 // Extensions (MCP servers, plugins, hooks)
 app.get('/api/extensions', async (_req, res) => {
-  const projectDirs = manager.list().map(s => s.cwd);
-  const overview = await scanConfig(projectDirs);
+  const config = await loadConfig();
+  const sessionDirs = manager.list().map(s => s.cwd);
+  const configDirs = config.workingDirectories.map(d => d.path);
+  const allDirs = [...new Set([...sessionDirs, ...configDirs])];
+  const overview = await scanConfig(allDirs);
   res.json(overview);
 });
 
